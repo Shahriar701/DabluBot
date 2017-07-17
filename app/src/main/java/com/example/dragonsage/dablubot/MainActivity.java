@@ -272,7 +272,6 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-
     public void CheckUserPermsions() {
         if (Build.VERSION.SDK_INT >= 23) {
             if (ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) !=
@@ -288,7 +287,6 @@ public class MainActivity extends AppCompatActivity {
 
     //get acces to location permsion
     final private int REQUEST_CODE_ASK_PERMISSIONS = 123;
-
 
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
@@ -316,6 +314,5 @@ public class MainActivity extends AppCompatActivity {
             tts.shutdown();
         }
         super.onDestroy();
-
     }
 }
