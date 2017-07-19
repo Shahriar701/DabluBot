@@ -4,6 +4,7 @@ import android.Manifest;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.content.res.AssetManager;
 import android.os.Build;
 import android.os.Environment;
@@ -36,8 +37,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 
+import static android.R.id.empty;
 import static android.R.id.message;
 
 public class MainActivity extends AppCompatActivity {
@@ -52,6 +55,7 @@ public class MainActivity extends AppCompatActivity {
     private ChatMessage.ChatMessageAdapter mAdapter;
     public ImageButton buSpeak;
     public TextToSpeech tts;
+    private static final int REQUEST_CODE = 1234;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -89,6 +93,7 @@ public class MainActivity extends AppCompatActivity {
                 String message = mEditTextMessage.getText().toString();
                 //bot
                 String response = chat.multisentenceRespond(mEditTextMessage.getText().toString());
+
                 if (TextUtils.isEmpty(message)) {
                     return;
                 }
@@ -218,9 +223,7 @@ public class MainActivity extends AppCompatActivity {
     public void buSpeak(View view) {
 
         tts.stop();
-
         startVoiceRecognitionActivity();
-
     }
 
 
@@ -236,38 +239,51 @@ public class MainActivity extends AppCompatActivity {
 
         intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, "en-US");
 
-        startActivityForResult(intent, 1234);
+        startActivityForResult(intent, REQUEST_CODE);
     }
+
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
 
-        //pull all of the matches
-        ArrayList<String> matches = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
+        if (requestCode == REQUEST_CODE && resultCode == RESULT_OK) {
 
-        String topResult = matches.get(0);
+            if (data!=null) {
 
-        EditText AutoText = (EditText) findViewById(R.id.et_message);
-        AutoText.setText(topResult);
+                //pull all of the matches
+                ArrayList<String> matches = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
 
+                String topResult = matches.get(0);
 
-        String message = AutoText.getText().toString();
-        //bot
-        final String response = chat.multisentenceRespond(AutoText.getText().toString());
-        if (TextUtils.isEmpty(response)) {
-            return;
-        }
-        sendMessage(message);
-        mimicOtherMessage(response);
-        mEditTextMessage.setText("");
-        mListView.setSelection(mAdapter.getCount() - 1);
+                EditText AutoText = (EditText) findViewById(R.id.et_message);
+                AutoText.setText(topResult);
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                String message = AutoText.getText().toString();
 
-            tts.speak(response, TextToSpeech.QUEUE_FLUSH, null, null);
+                //bot
 
-        } else {
-            tts.speak(response, TextToSpeech.QUEUE_FLUSH, null);
+                final String response = chat.multisentenceRespond(AutoText.getText().toString());
+
+                if (TextUtils.isEmpty(message)) {
+                    return;
+                }
+
+                sendMessage(message);
+                mimicOtherMessage(response);
+
+                mEditTextMessage.setText("");
+                mListView.setSelection(mAdapter.getCount() - 1);
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+
+                    tts.speak(response, TextToSpeech.QUEUE_FLUSH, null, null);
+
+                } else {
+                    tts.speak(response, TextToSpeech.QUEUE_FLUSH, null);
+                }
+            }else {
+                Toast.makeText(this, "Nothing said", Toast.LENGTH_SHORT).show();
+            }
         }
 
     }
